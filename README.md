@@ -4,13 +4,13 @@
 
 ### Machine Specification
 
-Our experiments were conducted on Google Cloud E2 machines, each with a 16-core CPU and 36 GB of RAM.
+Our experiments were conducted on M1 MacBook Pro running Sonoma 14.4.1 with 64GB of memory.
 
 ### Download LlamaREST-EX and LlamaREST-IPD
 
 Download these two SLMs (Small Language Models) in the root project directory.
-- Download LlamaREST-EX using this [link](https://gtvault-my.sharepoint.com/:u:/g/personal/mkim754_gatech_edu/ET13K-NrtcxIpgYY7Z-OF-YBJTTVWVcuw_RKaJX10CvHOA?e=aLWvgN).
-- Download LlamaREST-IPD using this [link](https://gtvault-my.sharepoint.com/:u:/g/personal/mkim754_gatech_edu/EY1wcOxGga5EkbnvRrKJJ4YB5HpBdcGPS-mLad7-70iqkw?e=bP4CVU).
+- Download LlamaREST-EX ([2B](https://drive.google.com/file/d/1wNbLSnI85jCiwOwYjwUmoH3ZrnVpv-ne/view?usp=sharing), [4B](https://drive.google.com/file/d/1y478aEulrICa6xrL9ojgAGBRFzMzLSV_/view?usp=sharing), [8B](https://drive.google.com/file/d/1GtAZD115FEEVnPKC1M2BYhrJpg1dKx_c/view?usp=sharing), [16B](https://drive.google.com/file/d/18geN_rmLI6EpNo1IhHZhW3lYaLUCRnxK/view?usp=sharing))
+- Download LlamaREST-IPD ([2B](https://drive.google.com/file/d/1X3yRZ9urjY2qhqqQLJXk7-fm1CI4145q/view?usp=sharing), [4B](https://drive.google.com/file/d/1G16vQtvg1dZfVPoxMCq9ifm73NQCnOqJ/view?usp=sharing), [8B](https://drive.google.com/file/d/1xVm--UmUXuns7LRbm5Bvdhx5ZCMQ_Uaz/view?usp=sharing), [16B](https://drive.google.com/file/d/18Jraekj5_M-CZ9B9PtEfMPdvcJwhJqVx/view?usp=sharing))
 
 Also, you can simply run the script `LlamaREST_EX.py` and `LlamaREST_IPD.py` to generate the LLMs! We used A100 GPU to run those.
 
