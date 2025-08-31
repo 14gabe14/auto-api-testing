@@ -1,6 +1,26 @@
 # LlamaRestTest
 
-## Set up the experiment
+## Quick Start with Docker (Recommended)
+
+For easier setup, we now provide a Docker version that handles all dependencies automatically:
+
+```bash
+# 1. Clone and setup
+git clone <repository-url>
+cd LlamaRestTest
+mkdir -p models
+# Place your LlamaREST .gguf model files in models/
+
+# 2. Build and run
+docker-compose build
+python3 docker-run.py llamaresttest fdic
+```
+
+See [DOCKER_README.md](DOCKER_README.md) for detailed Docker setup instructions.
+
+## Manual Setup (Advanced Users)
+
+### Set up the experiment
 
 ### Machine Specification
 
@@ -19,7 +39,6 @@ You can find the training dataset for Inter-Parameter Dependency in this [link](
 These are the used hyperparameter values for the training:
 
 #### bitsandbytes Parameters
-- **Model Name**: `Llama-2-7b-chat-hf`
 - **Use 4-bit Precision**: `True`
 - **Compute Dtype for 4-bit Models**: `float16`
 - **Quantization Type**: `nf4`

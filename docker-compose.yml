@@ -1,0 +1,36 @@
+services:
+  llamaresttest:
+    build: .
+    container_name: llamaresttest
+    volumes:
+      - ./models:/app/models:ro  # Mount your LlamaREST models here
+      - ./results:/app/results   # Mount results directory
+      - /var/run/docker.sock:/var/run/docker.sock  # For Docker-in-Docker if needed
+    ports:
+      - "9001-9009:9001-9009"    # Service proxy ports
+      - "8080:8080"              # YouTube service
+      - "50110-50112:50110-50112" # Internal service ports
+    environment:
+      - PYTHONPATH=/app
+      - JAVA_HOME=/usr/lib/jvm/java-1.11.0-openjdk-amd64
+    networks:
+      - llamaresttest-network
+    command: ["bash", "-c", "echo 'LlamaRestTest container ready. Use: docker exec -it llamaresttest bash' && tail -f /dev/null"]
+
+  # MongoDB for genome-nexus service
+  gn-mongo:
+    image: genomenexus/gn-mongo:latest
+    container_name: gn-mongo
+    ports:
+      - "27018:27017"
+    networks:
+      - llamaresttest-network
+    restart: unless-stopped
+
+networks:
+  llamaresttest-network:
+    driver: bridge
+
+volumes:
+  models:
+  results:

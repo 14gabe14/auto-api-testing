@@ -1,0 +1,40 @@
+# Ignore large model files during build (they should be mounted as volumes)
+*.gguf
+models/
+results/
+*.log
+
+# Ignore version control
+.git
+.gitignore
+
+# Ignore IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Ignore OS files
+.DS_Store
+Thumbs.db
+
+# Ignore build artifacts
+target/
+build/
+*.class
+*.jar
+!evomaster.jar
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+
+# Ignore temporary files
+*.tmp
+*.temp
