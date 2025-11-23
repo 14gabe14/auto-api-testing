@@ -1,0 +1,14 @@
+# Terraform files
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+terraform.tfvars
+*.tfvars.backup
+
+# SSH keys (if stored locally)
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+

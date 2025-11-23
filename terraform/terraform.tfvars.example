@@ -1,0 +1,45 @@
+project_id = "your-gcp-project-id"
+region     = "us-central1"
+zone       = "us-central1-a"
+
+# Number of instances to create (for parallelization)
+instance_count = 1
+
+# Git repository URL (optional, if not provided, manual setup required)
+# repo_url = "https://github.com/your-org/LlamaRestTest.git"
+
+# Experiment configurations for parallel execution
+# Each instance will run one tool/service combination
+experiment_configs = [
+  {
+    tool    = "llamaresttest"
+    service = "fdic"
+  },
+  # Add more configurations for parallel execution:
+  # {
+  #   tool    = "llamaresttest"
+  #   service = "spotify"
+  # },
+  # {
+  #   tool    = "evomaster"
+  #   service = "fdic"
+  # },
+]
+
+# Default tool/service if experiment_configs is empty
+default_tool    = "llamaresttest"
+default_service = "fdic"
+
+# Authentication tokens (optional, can use Secret Manager instead)
+# omdb_token    = "your-omdb-token"
+# spotify_token = "your-spotify-token"
+
+# Whether to upload results to Cloud Storage
+upload_results = true
+
+# Optional: Override defaults
+# instance_name = "llamaresttest-instance"
+# machine_type  = "n1-standard-8"
+# disk_size     = 100
+# force_destroy_bucket = false
+
