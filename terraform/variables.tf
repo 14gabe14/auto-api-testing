@@ -40,9 +40,9 @@ variable "ssh_user" {
 }
 
 variable "ssh_public_key_path" {
-  description = "Path to SSH public key file"
+  description = "Path to SSH public key file (leave empty to use GCP's default SSH key management)"
   type        = string
-  default     = "~/.ssh/id_rsa.pub"
+  default     = ""
 }
 
 variable "ssh_private_key_path" {

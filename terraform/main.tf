@@ -66,9 +66,9 @@ resource "google_compute_instance" "llamaresttest" {
     scopes = ["cloud-platform"]
   }
 
-  metadata = {
-    ssh-keys = "${var.ssh_user}:${file(var.ssh_public_key_path)}"
-  }
+  metadata = var.ssh_public_key_path != "" ? {
+    ssh-keys = "${var.ssh_user}:${try(file(var.ssh_public_key_path), "")}"
+  } : {}
 
   metadata_startup_script = templatefile("${path.module}/startup-script.sh", {
     docker_compose_version = "2.24.0"
