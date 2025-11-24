@@ -30,7 +30,7 @@ variable "machine_type" {
 variable "disk_size" {
   description = "Boot disk size in GB"
   type        = number
-  default     = 100
+  default     = 40  # Reduced from 100 - see DISK_SPACE_ANALYSIS.md for rationale
 }
 
 variable "ssh_user" {
@@ -98,15 +98,34 @@ variable "spotify_token" {
   sensitive   = true
 }
 
+variable "storage_bucket_name" {
+  description = "Name of existing Cloud Storage bucket (e.g., 'my-experiment')"
+  type        = string
+  default     = "my-experiment"
+}
+
+variable "models_path" {
+  description = "Path within bucket where models are stored (e.g., 'LlamaRestTest')"
+  type        = string
+  default     = "LlamaRestTest"
+}
+
+variable "results_path" {
+  description = "Path within bucket where results will be stored"
+  type        = string
+  default     = "llamaresttest-results"
+}
+
 variable "upload_results" {
   description = "Whether to upload results to Cloud Storage after experiment"
   type        = bool
   default     = true
 }
 
-variable "force_destroy_bucket" {
-  description = "Whether to force destroy the bucket on terraform destroy"
-  type        = bool
-  default     = false
+variable "disk_type" {
+  description = "Boot disk type. pd-standard is cheaper, pd-ssd is faster"
+  type        = string
+  default     = "pd-ssd" # Cheaper option, pd-ssd costs ~2x more
 }
+
 

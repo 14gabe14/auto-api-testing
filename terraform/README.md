@@ -195,7 +195,7 @@ Recommended machine types:
 
 Adjust disk size in `terraform.tfvars`:
 ```hcl
-disk_size = 200  # 200GB
+disk_size = 40  # 40GB (default, increase if needed)
 ```
 
 ### Region/Zone
@@ -211,7 +211,7 @@ zone   = "us-east1-b"
 ### Per Instance (1 hour runtime)
 - `n1-standard-8`: ~$0.04-0.05/hour (~$2-3 for 1 hour experiment)
 - `n1-standard-16`: ~$0.08-0.10/hour (~$4-5 for 1 hour experiment)
-- Disk (100GB SSD): ~$0.02/hour (one-time cost if kept)
+- Disk (40GB SSD): ~$0.007/hour (one-time cost if kept)
 - Network: Minimal (mostly internal)
 
 ### Example: 54 Parallel Experiments

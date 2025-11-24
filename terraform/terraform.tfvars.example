@@ -34,12 +34,21 @@ default_service = "fdic"
 # omdb_token    = "your-omdb-token"
 # spotify_token = "your-spotify-token"
 
+# Cloud Storage configuration (using existing bucket)
+storage_bucket_name = "my-experiment"  # Your existing bucket name
+models_path         = "LlamaRestTest"   # Path where models are stored in bucket
+results_path        = "llamaresttest-results"  # Path where results will be stored
+
 # Whether to upload results to Cloud Storage
 upload_results = true
+
+# Cost optimization options
+# disk_type = "pd-ssd"  # pd-standard is cheaper than pd-ssd
+# enable_storage_versioning = false  # Already default, saves on storage costs
 
 # Optional: Override defaults
 # instance_name = "llamaresttest-instance"
 # machine_type  = "n1-standard-8"
-# disk_size     = 100
+# disk_size     = 40  # Default is 40GB (see DISK_SPACE_ANALYSIS.md)
 # force_destroy_bucket = false
 

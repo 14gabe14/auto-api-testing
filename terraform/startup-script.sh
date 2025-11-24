@@ -86,10 +86,10 @@ else
 fi
 
 # Download models from Cloud Storage
-if [ -n "${bucket_name}" ]; then
-    echo "Downloading models from gs://${bucket_name}/models/..."
+if [ -n "${bucket_name}" ] && [ -n "${models_path}" ]; then
+    echo "Downloading models from gs://${bucket_name}/${models_path}/..."
     cd /home/ubuntu/llamaresttest
-    sudo -u ubuntu gsutil -m cp -r "gs://${bucket_name}/models/*" ./models/ 2>&1 || {
+    sudo -u ubuntu gsutil -m cp -r "gs://${bucket_name}/${models_path}/*" ./models/ 2>&1 || {
         echo "Warning: Failed to download models from Cloud Storage. Models may need to be uploaded manually."
     }
 fi
@@ -119,6 +119,7 @@ set -e
 TOOL_NAME="${tool_name}"
 SERVICE_NAME="${service_name}"
 BUCKET_NAME="${bucket_name}"
+RESULTS_PATH="${results_path}"
 UPLOAD_RESULTS="${upload_results}"
 
 echo "=== Starting experiment: \$TOOL_NAME on \$SERVICE_NAME at \$(date) ==="
@@ -144,19 +145,19 @@ if [ -f "collect.py" ]; then
 fi
 
 # Upload results to Cloud Storage if enabled
-if [ "\$UPLOAD_RESULTS" = "true" ] && [ -n "\$BUCKET_NAME" ]; then
-    echo "Uploading results to gs://\$BUCKET_NAME/results/\$TOOL_NAME/\$SERVICE_NAME/..."
+if [ "\$UPLOAD_RESULTS" = "true" ] && [ -n "\$BUCKET_NAME" ] && [ -n "\$RESULTS_PATH" ]; then
+    echo "Uploading results to gs://\$BUCKET_NAME/\$RESULTS_PATH/\$TOOL_NAME/\$SERVICE_NAME/..."
     RUN_ID="run-\$(date +%Y%m%d-%H%M%S)"
-    gsutil -m cp -r results/* "gs://\$BUCKET_NAME/results/\$TOOL_NAME/\$SERVICE_NAME/\$RUN_ID/" 2>&1 || {
+    gsutil -m cp -r results/* "gs://\$BUCKET_NAME/\$RESULTS_PATH/\$TOOL_NAME/\$SERVICE_NAME/\$RUN_ID/" 2>&1 || {
         echo "Warning: Failed to upload results to Cloud Storage"
     }
-    echo "Results uploaded to gs://\$BUCKET_NAME/results/\$TOOL_NAME/\$SERVICE_NAME/\$RUN_ID/"
+    echo "Results uploaded to gs://\$BUCKET_NAME/\$RESULTS_PATH/\$TOOL_NAME/\$SERVICE_NAME/\$RUN_ID/"
 fi
 
 echo "=== Experiment completed at \$(date) ==="
 
 # Optionally shut down the instance after completion
-# sudo shutdown -h +5  # Shutdown in 5 minutes
+sudo shutdown -h +5  # Shutdown in 5 minutes
 EXPERIMENT_EOF
 
 chmod +x /home/ubuntu/llamaresttest/run-experiment.sh

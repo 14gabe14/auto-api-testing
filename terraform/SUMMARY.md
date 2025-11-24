@@ -67,7 +67,6 @@ This Terraform configuration enables parallel execution of LlamaRestTest experim
 
 ### Created
 - `PARALLELIZATION_ANALYSIS.md` - Detailed analysis of differences
-- `ISSUES_AND_FIXES.md` - Issues found and how they were fixed
 - `launch-parallel.sh` - Helper script to generate experiment configs
 - `collect-results.sh` - Helper script to download results
 - `SUMMARY.md` - This file

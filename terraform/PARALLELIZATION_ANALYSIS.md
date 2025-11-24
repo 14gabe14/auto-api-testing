@@ -62,7 +62,7 @@ This ensures:
 ### Resource Requirements per Instance
 Based on DeepREST's requirements and LlamaRestTest's needs:
 - **Machine Type**: `n1-standard-8` (8 vCPUs, 30GB RAM) minimum
-- **Disk**: 100GB SSD (for models, code, results)
+- **Disk**: 40GB SSD (for models, code, results - see DISK_SPACE_ANALYSIS.md)
 - **Network**: Standard tier sufficient
 
 ### Execution Flow

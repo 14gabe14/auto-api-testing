@@ -34,29 +34,10 @@ resource "google_project_iam_member" "compute_instance_admin" {
   member  = "serviceAccount:${google_service_account.llamaresttest.email}"
 }
 
-# Cloud Storage bucket for models and results
-resource "google_storage_bucket" "llamaresttest" {
-  name          = "${var.project_id}-llamaresttest-${random_id.bucket_suffix.hex}"
-  location      = var.region
-  force_destroy = var.force_destroy_bucket
-
-  uniform_bucket_level_access = true
-
-  versioning {
-    enabled = true
-  }
-}
-
-resource "random_id" "bucket_suffix" {
-  byte_length = 4
-}
-
-# Bucket for models (read-only access)
-resource "google_storage_bucket_object" "models_placeholder" {
-  name    = "models/.gitkeep"
-  bucket  = google_storage_bucket.llamaresttest.name
-  content = "# Place your LlamaREST model files (.gguf) in this directory"
-}
+# Use existing Cloud Storage bucket for models and results
+# Bucket is assumed to already exist (e.g., "my-experiment")
+# Models should be in: gs://{bucket_name}/LlamaRestTest/
+# Results will be stored in: gs://{bucket_name}/llamaresttest-results/
 
 # Compute instance(s) - supports both single and multiple instances
 resource "google_compute_instance" "llamaresttest" {
@@ -69,7 +50,7 @@ resource "google_compute_instance" "llamaresttest" {
     initialize_params {
       image = "ubuntu-os-cloud/ubuntu-2004-lts"
       size  = var.disk_size
-      type  = "pd-ssd"
+      type  = var.disk_type # pd-standard is cheaper, pd-ssd is faster
     }
   }
 
@@ -92,7 +73,9 @@ resource "google_compute_instance" "llamaresttest" {
   metadata_startup_script = templatefile("${path.module}/startup-script.sh", {
     docker_compose_version = "2.24.0"
     project_id             = var.project_id
-    bucket_name            = google_storage_bucket.llamaresttest.name
+    bucket_name            = var.storage_bucket_name
+    models_path            = var.models_path
+    results_path           = var.results_path
     repo_url               = var.repo_url
     tool_name              = length(var.experiment_configs) > count.index ? var.experiment_configs[count.index].tool : var.default_tool
     service_name           = length(var.experiment_configs) > count.index ? var.experiment_configs[count.index].service : var.default_service
@@ -151,12 +134,17 @@ output "ssh_commands" {
 }
 
 output "bucket_name" {
-  value       = google_storage_bucket.llamaresttest.name
-  description = "Cloud Storage bucket name for models and results"
+  value       = var.storage_bucket_name
+  description = "Cloud Storage bucket name being used"
+}
+
+output "models_path" {
+  value       = "gs://${var.storage_bucket_name}/${var.models_path}"
+  description = "Cloud Storage path for models"
 }
 
 output "results_path" {
-  value       = "gs://${google_storage_bucket.llamaresttest.name}/results/"
+  value       = "gs://${var.storage_bucket_name}/${var.results_path}/"
   description = "Cloud Storage path for results"
 }
 

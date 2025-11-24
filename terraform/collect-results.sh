@@ -3,22 +3,24 @@
 
 set -e
 
-BUCKET_NAME="${1:-}"
-if [ -z "$BUCKET_NAME" ]; then
-    echo "Usage: $0 <bucket-name>"
-    echo "Get bucket name from: terraform output bucket_name"
+# Get results path from terraform output
+RESULTS_PATH=$(terraform output -raw results_path 2>/dev/null || echo "")
+
+if [ -z "$RESULTS_PATH" ]; then
+    echo "Error: Could not get results path from terraform output"
+    echo "Make sure you've run 'terraform apply' and are in the terraform directory"
     exit 1
 fi
 
 LOCAL_RESULTS_DIR="./collected-results"
 
-echo "Collecting results from gs://$BUCKET_NAME/results/..."
+echo "Collecting results from $RESULTS_PATH..."
 
 # Create local directory
 mkdir -p "$LOCAL_RESULTS_DIR"
 
 # Download all results
-gsutil -m cp -r "gs://$BUCKET_NAME/results/*" "$LOCAL_RESULTS_DIR/" || {
+gsutil -m cp -r "${RESULTS_PATH}*" "$LOCAL_RESULTS_DIR/" || {
     echo "Warning: Some results may not have been uploaded yet"
 }
 
