@@ -24,13 +24,15 @@ variable "instance_name" {
 variable "machine_type" {
   description = "Machine type for the instance"
   type        = string
-  default     = "n1-standard-8" # 8 vCPUs, 30GB RAM - minimum recommended (original experiments used 64GB RAM but ran all services simultaneously)
+  default     = "n1-standard-24" # 32 vCPUs, 120GB RAM - for parallel execution (each run needs 16 CPUs + 32GB RAM)
+  # Alternatives: n1-standard-64 (64 vCPUs, 240GB) for 4 concurrent experiments
+  #               n1-standard-96 (96 vCPUs, 360GB) for 6 concurrent experiments
 }
 
 variable "disk_size" {
   description = "Boot disk size in GB"
   type        = number
-  default     = 40  # Reduced from 100 - see DISK_SPACE_ANALYSIS.md for rationale
+  default     = 100 
 }
 
 variable "ssh_user" {
@@ -52,7 +54,7 @@ variable "ssh_private_key_path" {
 }
 
 variable "instance_count" {
-  description = "Number of instances to create (for parallelization)"
+  description = "Number of instances to create (set to 1 for single-VM parallel execution)"
   type        = number
   default     = 1
 }
@@ -128,4 +130,14 @@ variable "disk_type" {
   default     = "pd-ssd" # Cheaper option, pd-ssd costs ~2x more
 }
 
+variable "num_runs_per_combination" {
+  description = "Number of experiment runs per API/tool combination"
+  type        = number
+  default     = 1
+}
 
+variable "auto_start_experiments" {
+  description = "Automatically start experiments on VM boot"
+  type        = bool
+  default     = false
+}

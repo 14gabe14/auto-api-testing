@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-
+  
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -48,7 +48,7 @@ resource "google_compute_instance" "llamaresttest" {
 
   boot_disk {
     initialize_params {
-      image = "ubuntu-os-cloud/ubuntu-2004-lts"
+      image = "ubuntu-os-cloud/ubuntu-2204-lts"
       size  = var.disk_size
       type  = var.disk_type # pd-standard is cheaper, pd-ssd is faster
     }
@@ -70,18 +70,15 @@ resource "google_compute_instance" "llamaresttest" {
     ssh-keys = "${var.ssh_user}:${try(file(var.ssh_public_key_path), "")}"
   } : {}
 
-  metadata_startup_script = templatefile("${path.module}/startup-script.sh", {
-    docker_compose_version = "2.24.0"
-    project_id             = var.project_id
-    bucket_name            = var.storage_bucket_name
-    models_path            = var.models_path
-    results_path           = var.results_path
-    repo_url               = var.repo_url
-    tool_name              = length(var.experiment_configs) > count.index ? var.experiment_configs[count.index].tool : var.default_tool
-    service_name           = length(var.experiment_configs) > count.index ? var.experiment_configs[count.index].service : var.default_service
-    omdb_token             = var.omdb_token
-    spotify_token          = var.spotify_token
-    upload_results         = var.upload_results
+  metadata_startup_script = templatefile("${path.module}/startup-script-parallel.sh", {
+    project_id     = var.project_id
+    bucket_name    = var.storage_bucket_name
+    models_path    = var.models_path
+    results_path   = var.results_path
+    repo_url       = var.repo_url
+    upload_results = var.upload_results
+    num_runs       = var.num_runs_per_combination
+    auto_start     = var.auto_start_experiments
   })
 
   tags = ["llamaresttest"]

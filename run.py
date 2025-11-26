@@ -186,5 +186,5 @@ if __name__ == "__main__":
         if service == "youtube":
             subprocess.run("tmux new -d -s llama9 'cd tool/llama3/youtube && bash tool.sh'", shell=True)
 
-    time.sleep(300) # Use 5 minutes for testing
+    time.sleep(300)
     subprocess.run("tmux kill-server", shell=True)

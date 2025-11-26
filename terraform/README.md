@@ -1,13 +1,21 @@
-# Terraform Configuration for LlamaRestTest on GCP
+# Terraform Configuration for LlamaRestTest Parallel Execution on GCP
 
-This Terraform configuration creates GCP Compute Engine instances to run LlamaRestTest experiments in parallel, ensuring scientific accuracy through complete isolation between runs.
+This Terraform configuration creates a single GCP Compute Engine instance to run LlamaRestTest experiments in parallel using Docker containers, similar to DeepREST's architecture.
+
+## Architecture
+
+- **Single VM**: One powerful VM (n1-standard-24 or larger) runs all experiments
+- **Docker Containers**: Each service and tool runs in isolated Docker containers
+- **Dynamic Resource Allocation**: Experiments run concurrently with resource checking
+- **DeepREST Services**: Uses pre-built DeepREST service Docker images
+- **LlamaRestTest Tool**: Custom Docker container with LLM models
 
 ## Prerequisites
 
 1. **GCP Account**: You need a GCP project with billing enabled
 2. **Terraform**: Install Terraform >= 1.0
 3. **GCP CLI**: Install and configure `gcloud` CLI
-4. **SSH Keys**: Generate SSH key pair if you don't have one
+4. **LLM Models**: Upload LlamaREST models to Cloud Storage (see below)
 
 ## Setup
 
@@ -18,287 +26,331 @@ gcloud auth login
 gcloud auth application-default login
 ```
 
-### 2. Set up Terraform variables
+### 2. Upload Models to Cloud Storage
+
+Before deploying, upload your LlamaREST models:
+
+```bash
+# Set your bucket name
+BUCKET_NAME="my-experiment"  # Your existing bucket
+MODELS_PATH="LlamaRestTest"  # Path within bucket
+
+# Upload models
+gsutil cp ex.gguf ipd.gguf gs://$BUCKET_NAME/$MODELS_PATH/
+```
+
+### 3. Set up Terraform variables
 
 ```bash
 cd terraform
 cp terraform.tfvars.example terraform.tfvars
 ```
 
-Edit `terraform.tfvars` and set your project ID:
+Edit `terraform.tfvars`:
+
 ```hcl
 project_id = "your-gcp-project-id"
 region     = "us-central1"
 zone       = "us-central1-a"
+
+# Single VM for parallel execution
+instance_count = 1
+machine_type   = "n1-standard-24"  # 24 vCPUs, 90GB RAM
+disk_size      = 100               # GB for Docker images
+
+# Repository
+repo_url = "https://github.com/your-username/LlamaRestTest.git"
+
+# Cloud Storage (existing bucket)
+storage_bucket_name = "my-experiment"
+models_path         = "LlamaRestTest"
+results_path        = "llamaresttest-results"
+
+# Parallel execution
+num_runs_per_combination = 1  # Runs per API/tool combo
+auto_start_experiments   = false  # Manual start recommended
+
+# Upload results
+upload_results = true
 ```
 
-### 3. Initialize Terraform
+### 4. Initialize Terraform
 
 ```bash
 terraform init
 ```
 
-### 4. Review the plan
+### 5. Review the plan
 
 ```bash
 terraform plan
 ```
 
-### 5. Apply the configuration
+### 6. Apply the configuration
 
 ```bash
 terraform apply
 ```
 
 This will create:
-- One or more GCP Compute Engine instances (n1-standard-8 by default)
-- Cloud Storage bucket for models and results
+- One GCP Compute Engine instance (n1-standard-24 by default)
 - Service account with necessary permissions
-- Firewall rules for SSH and LlamaRestTest ports
-- Startup script that installs dependencies, runs experiments, and uploads results
-
-## Parallelization Support
-
-This configuration supports running multiple experiments in parallel, with each experiment running on its own isolated VM instance. This ensures:
-- **Scientific Accuracy**: Complete isolation between experiments
-- **No Port Conflicts**: Each instance has its own network namespace
-- **Reproducibility**: Identical environments across all instances
-- **Scalability**: Run as many experiments in parallel as your quota/budget allows
+- Firewall rules for SSH
+- Startup script that installs Docker, builds images, and sets up experiments
 
 ## After Deployment
 
-### Automatic Execution
+### Automatic Execution (Optional)
 
-If you configured `repo_url`, `tool_name`, and `service_name` in `terraform.tfvars`, experiments will run automatically on startup. You can monitor progress via:
+If `auto_start_experiments = true`, experiments start automatically on VM boot.
 
+### Manual Execution (Recommended)
+
+1. **SSH into the instance**:
 ```bash
-# SSH into an instance
-gcloud compute ssh llamaresttest-instance-1 --zone=us-central1-a
+gcloud compute ssh llamaresttest-instance --zone=us-central1-a
+```
 
-# Check experiment status
-sudo journalctl -u llamaresttest-experiment.service -f
+2. **Start experiments**:
+```bash
+cd /home/ubuntu/llamaresttest
+python3 run_parallel.py
+# Enter number of runs when prompted (e.g., 1-20)
+```
 
-# Or check the startup log
+3. **Monitor progress**:
+```bash
+# Check Docker containers
+docker ps
+
+# Check systemd service logs
+sudo journalctl -u llamaresttest-parallel.service -f
+
+# Check startup logs
 sudo tail -f /var/log/llamaresttest-startup.log
-```
 
-### Manual Execution (if automatic setup not configured)
-
-1. **SSH into the instance**
-```bash
-# Get instance IP from terraform output
-terraform output instance_ips
-
-# SSH into first instance
-gcloud compute ssh llamaresttest-instance-1 --zone=us-central1-a
-```
-
-2. **Upload LlamaRestTest code** (if not using Git)
-
-**Option A: Clone from Git** (recommended)
-```bash
-cd /home/ubuntu
-git clone <your-repo-url> llamaresttest
-cd llamaresttest
-```
-
-**Option B: Upload via SCP**
-```bash
-# From your local machine
-gcloud compute scp --recurse /path/to/LlamaRestTest llamaresttest-instance-1:~/llamaresttest --zone=us-central1-a
-```
-
-3. **Upload model files to Cloud Storage** (recommended)
-```bash
-# From your local machine
-BUCKET_NAME=$(terraform output -raw bucket_name)
-gsutil -m cp -r /path/to/models/* gs://$BUCKET_NAME/models/
-```
-
-4. **Run experiments manually**
-```bash
-cd ~/llamaresttest
-./run-experiment.sh
+# Check results
+ls -la /home/ubuntu/llamaresttest/results/
 ```
 
 ### Collecting Results
 
-Results are automatically uploaded to Cloud Storage. To download all results:
+Results are automatically uploaded to Cloud Storage if `upload_results = true`. Download locally:
 
 ```bash
-BUCKET_NAME=$(terraform output -raw bucket_name)
-./collect-results.sh $BUCKET_NAME
+# From terraform directory
+./collect-results.sh
 ```
 
 Or manually:
 ```bash
-gsutil -m cp -r gs://$BUCKET_NAME/results/* ./collected-results/
+BUCKET_NAME=$(terraform output -raw storage_bucket_name)
+RESULTS_PATH=$(terraform output -raw results_path)
+gsutil -m cp -r gs://$BUCKET_NAME/$RESULTS_PATH/* ./collected-results/
 ```
 
 ## Configuration Options
 
-### Parallel Execution
-
-To run multiple experiments in parallel, configure `experiment_configs` in `terraform.tfvars`:
-
-```hcl
-instance_count = 5
-
-experiment_configs = [
-  {
-    tool    = "llamaresttest"
-    service = "fdic"
-  },
-  {
-    tool    = "llamaresttest"
-    service = "spotify"
-  },
-  {
-    tool    = "evomaster"
-    service = "fdic"
-  },
-  {
-    tool    = "evomaster"
-    service = "spotify"
-  },
-  {
-    tool    = "resttestgen"
-    service = "fdic"
-  },
-]
-```
-
-Or use the helper script to generate all combinations:
-```bash
-export GCP_PROJECT_ID="your-project"
-export REPO_URL="https://github.com/your-org/LlamaRestTest.git"
-./launch-parallel.sh
-terraform apply
-```
-
 ### Machine Type
 
-Edit `variables.tf` or `terraform.tfvars` to change the machine type:
+Each experiment requires **16 CPUs + 32GB RAM** (matching DeepREST):
+- API container: 8 CPUs, 16GB RAM
+- Tool container: 8 CPUs, 16GB RAM
+
+**Recommended VM sizes**:
+- **n1-standard-24** (24 vCPUs, 90GB RAM): 1 concurrent experiment (default)
+- **n1-standard-32** (32 vCPUs, 120GB RAM): 2 concurrent experiments
+- **n1-standard-64** (64 vCPUs, 240GB RAM): 4 concurrent experiments
+- **n1-standard-96** (96 vCPUs, 360GB RAM): 6 concurrent experiments
+
+Edit `terraform.tfvars`:
 ```hcl
-machine_type = "n1-standard-16"  # 16 vCPUs, 60GB RAM
+machine_type = "n1-standard-32"  # For 2 concurrent experiments
 ```
 
-Recommended machine types:
-- `n1-standard-8` (8 vCPUs, 30GB RAM) - **Minimum recommended** (based on DeepREST's per-container allocation of 16GB RAM + 8 CPUs, but LlamaRestTest runs services on host with less overhead)
-- `n1-standard-16` (16 vCPUs, 60GB RAM) - **Recommended** for reliable execution (original experiments used 64GB RAM MacBook, but that ran all services simultaneously)
-- `n1-highmem-8` (8 vCPUs, 52GB RAM) - Good alternative if you need more memory but fewer CPUs
-- `n1-standard-4` (4 vCPUs, 15GB RAM) - **Not recommended** (likely insufficient for Java services + tools)
+### Number of Runs
 
-**Note**: The original LlamaRestTest experiments were run on an M1 MacBook Pro with 64GB RAM, but that machine ran ALL services simultaneously (`run_service.py all`). Since our parallelization approach runs one tool/service combination per instance, `n1-standard-8` should be sufficient, but `n1-standard-16` provides more headroom and is recommended for production runs.
+Set how many times to run each API/tool combination:
+
+```hcl
+num_runs_per_combination = 10  # 10 runs per combination
+```
+
+### Auto-Start
+
+Automatically start experiments on VM boot:
+
+```hcl
+auto_start_experiments = true
+```
+
+**Note**: Manual start is recommended for first-time setup to monitor the build process.
 
 ### Disk Size
 
-Adjust disk size in `terraform.tfvars`:
+Adjust for Docker images and models:
+
 ```hcl
-disk_size = 40  # 40GB (default, increase if needed)
+disk_size = 100  # GB (default, increase if needed)
 ```
 
-### Region/Zone
+## Resource Allocation
 
-Change region/zone in `terraform.tfvars`:
-```hcl
-region = "us-east1"
-zone   = "us-east1-b"
-```
+### Per Experiment Run
+- **API Container**: 8 CPUs, 16GB RAM
+- **Tool Container**: 8 CPUs, 16GB RAM
+- **Total**: 16 CPUs, 32GB RAM per run
+
+### Resource Checking
+The orchestration script waits for **14 free CPUs** before launching a new experiment, ensuring sufficient resources.
+
+### Concurrent Execution
+
+On a 24 vCPU VM:
+- **Realistic**: 1 concurrent experiment (16 CPUs allocated, 8 CPUs free)
+- **With CPU overcommitment**: 1-2 concurrent (Docker allows CPU overcommitment)
+
+For true parallel execution, use larger VMs:
+- **n1-standard-32**: 2 concurrent experiments
+- **n1-standard-64**: 4 concurrent experiments
 
 ## Cost Estimation
 
-### Per Instance (1 hour runtime)
-- `n1-standard-8`: ~$0.04-0.05/hour (~$2-3 for 1 hour experiment)
-- `n1-standard-16`: ~$0.08-0.10/hour (~$4-5 for 1 hour experiment)
-- Disk (40GB SSD): ~$0.007/hour (one-time cost if kept)
-- Network: Minimal (mostly internal)
+### Per Hour (us-central1)
+- **n1-standard-24**: ~$0.95/hour (~$684/month)
+- **n1-standard-32**: ~$1.52/hour (~$1,095/month)
+- **n1-standard-64**: ~$3.04/hour (~$2,189/month)
+- **Preemptible** (70% savings):
+  - n1-standard-24: ~$0.285/hour (~$205/month)
+  - n1-standard-32: ~$0.456/hour (~$328/month)
 
-### Example: 54 Parallel Experiments
-- 54 instances × n1-standard-8 × 1 hour = ~$2-3 total
-- Storage: ~$10/month (if instances are kept)
-- **Total for 1 hour of parallel execution**: ~$2-3
+### Example: 11 Experiments (11 APIs × 1 tool × 1 run)
+- **Sequential on n1-standard-24**: ~11 hours × $0.95 = **~$10.45**
+- **Parallel on n1-standard-64** (4 concurrent): ~3 hours × $3.04 = **~$9.12**
 
 **Cost Optimization Tips**:
-1. Use preemptible instances (80% cost reduction): Add `preemptible = true` to instance config
-2. Delete instances after experiments complete
-3. Use smaller machine types if experiments don't require full resources
-4. Stop instances when not in use:
+1. Use preemptible instances (70% cost reduction)
+2. Delete VM after experiments complete
+3. Use appropriate machine size for your concurrency needs
+4. Stop VM when not in use: `gcloud compute instances stop llamaresttest-instance --zone=us-central1-a`
+
+## Available Services
+
+The system uses DeepREST's pre-built service Docker images:
+- blog
+- features-service
+- genome-nexus
+- languagetool
+- market
+- ncs
+- person-controller
+- project-tracking-system
+- restcountries
+- scs
+- user-management
+
+## Available Tools
+
+- llamaresttest (with LlamaREST-EX and LlamaREST-IPD models)
+
+## Troubleshooting
+
+### Docker Images Not Building
+
 ```bash
-# Stop all instances
-for instance in $(terraform output -json instance_names | jq -r '.[]'); do
-    gcloud compute instances stop $instance --zone=us-central1-a
-done
+# SSH into instance
+gcloud compute ssh llamaresttest-instance --zone=us-central1-a
+
+# Check Docker status
+sudo systemctl status docker
+
+# Rebuild images manually
+cd /home/ubuntu/llamaresttest
+python3 build.py
+```
+
+### Experiments Not Starting
+
+```bash
+# Check systemd service
+sudo systemctl status llamaresttest-parallel.service
+
+# View service logs
+sudo journalctl -u llamaresttest-parallel.service -n 100
+
+# Check resource availability
+python3 -c "import psutil; print(f'CPUs: {psutil.cpu_count()}, RAM: {psutil.virtual_memory().available / (1024**3):.1f}GB')"
+```
+
+### Container Failures
+
+```bash
+# List all containers
+docker ps -a
+
+# Check container logs
+docker logs <container-name>
+
+# Remove failed containers
+docker rm $(docker ps -a -q -f status=exited)
+```
+
+### Models Not Found
+
+```bash
+# Check models directory
+ls -la /home/ubuntu/llamaresttest/models/
+
+# Re-download models
+cd /home/ubuntu/llamaresttest
+gsutil -m cp -r gs://my-experiment/LlamaRestTest/* ./models/
 ```
 
 ## Cleanup
 
 To destroy all resources:
+
 ```bash
 terraform destroy
 ```
 
-## Troubleshooting
-
-### SSH Connection Issues
-
-1. Check firewall rules:
-```bash
-gcloud compute firewall-rules list
-```
-
-2. Verify SSH key is correct:
-```bash
-gcloud compute instances describe llamaresttest-instance --zone=us-central1-a
-```
-
-### Docker Not Starting
-
-Check startup script logs:
-```bash
-sudo cat /var/log/llamaresttest-startup.log
-```
-
-### Port Conflicts
-
-If you need to change ports, modify:
-- `docker-compose.yml` in the LlamaRestTest directory
-- Firewall rules in `main.tf`
-
 ## Next Steps
 
-1. **Upload Models to Cloud Storage**:
+1. **Test Locally First** (optional):
    ```bash
-   BUCKET_NAME=$(terraform output -raw bucket_name)
-   gsutil -m cp -r /path/to/your/models/*.gguf gs://$BUCKET_NAME/models/
-   ```
+   # Build Docker images locally
+   python3 build.py
 
-2. **Configure Authentication Tokens** (if needed):
-   - Set `omdb_token` and `spotify_token` in `terraform.tfvars`
-   - Or use Secret Manager for better security
+   # Test single experiment
+   python3 run_parallel.py
+```
 
-3. **Test Single Instance First**:
-   - Start with `instance_count = 1` to verify setup
-   - Check logs and results before scaling up
+2. **Deploy to GCP**:
+```bash
+   cd terraform
+   terraform apply
+```
 
-4. **Scale to Parallel Execution**:
-   - Use `launch-parallel.sh` to generate configurations
-   - Gradually increase `instance_count`
-   - Monitor costs and quotas
+3. **Monitor First Run**:
+```bash
+   gcloud compute ssh llamaresttest-instance --zone=us-central1-a
+   sudo tail -f /var/log/llamaresttest-startup.log
+```
 
-5. **Collect Results**:
-   ```bash
-   BUCKET_NAME=$(terraform output -raw bucket_name)
-   ./collect-results.sh $BUCKET_NAME
-   ```
+4. **Scale Up**:
+   - Increase `num_runs_per_combination` for more repetitions
+   - Use larger machine type for more concurrent experiments
 
 ## Scientific Accuracy
 
 This setup ensures scientific accuracy through:
-- **Isolation**: Each experiment runs on a separate VM
-- **Reproducibility**: Identical environments (same image, same setup)
+- **Isolation**: Each experiment runs in separate Docker containers
+- **Reproducibility**: Identical environments (same Docker images)
 - **Consistency**: Same models, same duration (1 hour), same resources
-- **No Interference**: No port conflicts, no resource contention
+- **Resource Management**: Dynamic allocation prevents interference
 
-See `PARALLELIZATION_ANALYSIS.md` and `ISSUES_AND_FIXES.md` for detailed analysis.
+## Documentation
 
+- **Parallel Execution Guide**: See `../PARALLEL_EXECUTION.md` for detailed usage
+- **Bucket Structure**: See `BUCKET_STRUCTURE.md` for Cloud Storage details
+- **Resource Requirements**: See `RESOURCE_REQUIREMENTS.md` for sizing guidance
