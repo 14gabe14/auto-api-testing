@@ -1,0 +1,8 @@
+venv/
+services/jacoco*.exec
+services/log-*.txt
+services/__pycache__/
+tool/deeprest/__pycache__/
+
+org.jacoco.*
+res.csv

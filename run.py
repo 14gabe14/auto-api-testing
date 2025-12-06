@@ -71,6 +71,25 @@ if __name__ == "__main__":
             subprocess.run("tmux new -d -s schema8 'cd tool/schemathesis/spotify && bash ./tool.sh'", shell=True)
         if service == "youtube":
             subprocess.run("tmux new -d -s schema9 'cd tool/schemathesis/youtube && bash ./tool.sh'", shell=True)
+    elif name == "deeprest":
+        if service == "fdic":
+            subprocess.run("tmux new -d -s deeprest1 'cd tool/deeprest/fdic && bash ./tool.sh'", shell=True)
+        if service == "genome-nexus":
+            subprocess.run("tmux new -d -s deeprest2 'cd tool/deeprest/genome-nexus && bash ./tool.sh'", shell=True)
+        if service == "language-tool":
+            subprocess.run("tmux new -d -s deeprest3 'cd tool/deeprest/language-tool && bash ./tool.sh'", shell=True)
+        if service == "ocvn":
+            subprocess.run("tmux new -d -s deeprest4 'cd tool/deeprest/ocvn && bash ./tool.sh'", shell=True)
+        if service == "ohsome":
+            subprocess.run("tmux new -d -s deeprest5 'cd tool/deeprest/ohsome && bash ./tool.sh'", shell=True)
+        if service == "omdb":
+            subprocess.run("tmux new -d -s deeprest6 'cd tool/deeprest/omdb && bash ./tool.sh'", shell=True)
+        if service == "rest-countries":
+            subprocess.run("tmux new -d -s deeprest7 'cd tool/deeprest/rest-countries && bash ./tool.sh'", shell=True)
+        if service == "spotify":
+            subprocess.run("tmux new -d -s deeprest8 'cd tool/deeprest/spotify && bash ./tool.sh'", shell=True)
+        if service == "youtube":
+            subprocess.run("tmux new -d -s deeprest9 'cd tool/deeprest/youtube && bash ./tool.sh'", shell=True)
     elif name == "tcases":
         if service == "fdic":
             subprocess.run("tmux new -d -s tcases1 'cd tool/tcases/fdic && bash tool.sh'", shell=True)

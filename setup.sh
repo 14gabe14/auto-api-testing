@@ -20,19 +20,22 @@ sudo apt-get install -y openjdk-11-jdk
 # Install Python3
 sudo apt-get install -y python3-pip python3-venv
 python3 -m venv venv
+. ./venv/bin/activate
+python -m pip install --upgrade pip
+python -m pip install --no-cache-dir -r requirements.txt
 
 # Install Schemathesis
-cd $DEFAULT_DIR
-. ./venv/bin/activate && pip install requests schemathesis && pip install -r requirements.txt
+# cd $DEFAULT_DIR
+# . ./venv/bin/activate && pip install requests schemathesis && pip install -r requirements.txt
 
 # Install EvoMaster
-wget https://github.com/EMResearch/EvoMaster/releases/download/v1.5.0/evomaster.jar.zip
-unzip evomaster.jar.zip
-rm evomaster.jar.zip
+# wget https://github.com/EMResearch/EvoMaster/releases/download/v1.5.0/evomaster.jar.zip
+# unzip evomaster.jar.zip
+# rm evomaster.jar.zip
 
 # Install RestTestGen
-cd $DEFAULT_DIR
-. ./java11.env && cd tool/resttestgen && ./gradlew install
+# cd $DEFAULT_DIR
+# . ./java11.env && cd tool/resttestgen && ./gradlew install
 
 # Install Docker
 sudo apt-get install -y docker.io
@@ -43,13 +46,13 @@ wget https://repo1.maven.org/maven2/org/jacoco/org.jacoco.agent/0.8.7/org.jacoco
 wget https://repo1.maven.org/maven2/org/jacoco/org.jacoco.cli/0.8.7/org.jacoco.cli-0.8.7-nodeps.jar
 
 # Install Evo Bench
-cd $DEFAULT_DIR
-. ./java8.env && cd services/emb && mvn clean install -DskipTests && mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
+# cd $DEFAULT_DIR
+# . ./java8.env && cd services/emb && mvn clean install -DskipTests && mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
 
 # Install Genome-Nexus
 cd $DEFAULT_DIR
 . ./java8.env && cd services/genome-nexus && mvn clean install -DskipTests
 
 # Install YouTube Mock service
-cd $DEFAULT_DIR
-. ./java11.env && cd services/youtube && mvn clean install -DskipTests && mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
+# cd $DEFAULT_DIR
+# . ./java11.env && cd services/youtube && mvn clean install -DskipTests && mvn dependency:build-classpath -Dmdep.outputFile=cp.txt
